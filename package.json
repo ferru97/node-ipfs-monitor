@@ -1,0 +1,27 @@
+{
+  "name": "node-ipfs-monitor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cids": "^0.8.0",
+    "decimal-to-binary": "^1.0.3",
+    "geoip-lite": "^1.4.1",
+    "hex-to-binary": "^1.0.1",
+    "ipfs": "^0.41.2",
+    "ipfs-http-client": "^43.0.0",
+    "js-ipfs": "0.0.301",
+    "js-sha256": "^0.9.0",
+    "multiaddr": "^7.4.3",
+    "mysql": "^2.18.1",
+    "sleepjs": "^3.0.1",
+    "xor-distance": "^2.0.0",
+    "yargs": "^15.3.1"
+  }
+}
