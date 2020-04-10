@@ -6,7 +6,8 @@ function connectDB(Host,Port,User,Password,Database) {
         port: Port,
         user: User,
         password: Password,
-        database: Database
+        database: Database,
+        multipleStatements: true
         });
     
         connection.connect(function(err) {
@@ -21,32 +22,33 @@ function connectDB(Host,Port,User,Password,Database) {
     return connection
 }
 
-function saveDHTcheck(DBconn,buckets){
+function saveDHTcheck(DBconn,buckets,total_peers,distinct_peer){
 
     var time = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    var sql = `INSERT INTO dhtt_check VALUES('DEFAULT','${time}')`;
-    var insert_id = -1;
-    DBconn.query(sql, (err, result, fields, insert_id) => {
+    var sql = `INSERT INTO dhtt_check VALUES('DEFAULT','${time}','${parseInt(total_peers)}','${parseInt(distinct_peer)}')`
+    DBconn.query(sql ,(err, result, fields) => {
         if (err) throw err;
-        insert_id = result.insertId;
-    });
-    console.log("LAST ID_>"+insert_id)
-   /* for (var key in buckets) {
-        if (buckets.hasOwnProperty(key)) {           
-            if(buckets[key]!=0){
-                sql = `INSERT INTO dhtt_bucket VALUES('DEFAULT','${insert_id}','${key}','${buckets[key].length}')`;
-                DBconn.query(sql, function (err, result, fields) {
-                    if (err) throw err;
-                    insert_id = result.insertId;
-                });
+        var insert_id = result.insertId;
 
-                sql = `INSERT INTO dhtt_peer VALUES('DEFAULT','${insert_id}',${buckets[key][1]}')`;
-                DBconn.query(sql, function (err, result, fields) {
-                    if (err) throw err;
-                });
+        DBconn.query("SELECT id FROM dhtt_bucket ORDER BY id DESC LIMIT 1 " ,(err, result, fields) => {
+            var last_id = result.length>0 ? parseInt(result[0].id)+1 : 1
+            for (var key in buckets) {
+                if (buckets.hasOwnProperty(key) && buckets[key].length>0) {  
+                    var cids = buckets[key]
+                    var sql = `INSERT INTO dhtt_bucket VALUES('${last_id}','${insert_id}','${key}','${buckets[key].length}');`
+                    sql += ` INSERT INTO dhtt_peer VALUES('DEFAULT','${last_id}','${cids[0]}')`
+                    for(var i=1; i<cids.length; i++)
+                         sql += `,('DEFAULT','${last_id}','${cids[i]}')`
+                    sql+=";"
+    
+                    DBconn.query(sql,(err, result, fields) => {
+                        if (err) throw err;
+                    });
+                    last_id++;
+                }
             }
-        }
-    }*/
+        })
+    });
 }
 
 

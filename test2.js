@@ -8,7 +8,6 @@ const CID = require('cids')
 var hexToBinary = require('hex-to-binary');
 var DB = require('./SqlSave')
 const yargs = require("yargs")
-var distance = require('xor-distance')
 var sha256 = require('js-sha256');
 
 
@@ -57,30 +56,31 @@ console.log(`SWARM SIZE -> ${peersInfos.length}`)
 }
 
 async function monitorDHTtable(ipfs,db,my_cid){
-  var hash = sha256.create();
-  const cid = new CID(my_cid)
-  var multiH  = multihash.decode(cid.multihash,'hex')
-  var cid_hex = hash.update(multiH.digest.toString('hex')).hex()
-  var cid_bin = hexToBinary(cid_hex)
+  
+  const cid = new CID("QmeSn1aFaDAtnM2ZjADu3F1LvuMsf63QGMRkd5hJjn8hZU")
+  //var hash = sha256.create();
+  //var multiH  = multihash.decode(cid.multihash,'hex')
+  //var cid_sha = hash.update(multiH.digest.toString('hex')).hex()
+  var cid_bin = hexToBinary(cid.multihash.toString('hex')) //hexToBinary(peer_sha) if we want to try the sha256(id) XOR method
 
   var peers_list = [];
   var peers_found = {}
   var count = 0;
   for await (const info of ipfs.dht.query(my_cid)) {
     try{
-      var peer_cid = new CID(info.id);
-      var hash2 = sha256.create();
-      var multiH2  = multihash.decode(peer_cid.multihash, 'hex')
-      var peer_hex = hash2.update(multiH2.digest.toString('hex')).hex()
-      var peer_bin = hexToBinary(peer_hex)
-      
-
-      if(!peers_found.hasOwnProperty(peer_cid.toString())){
-        peers_found[peer_cid.toString()] = "true";
-        peers_list.push([peer_bin,peer_cid.toString()])
+      for(var k=0; k<info.responses.length; k++){
+        var peer_cid = new CID(info.responses[k].id);
+        //var hash2 = sha256.create();
+        //var multiH2  = multihash.decode(peer_cid.multihash, 'hex')
+        //var peer_sha = hash2.update(multiH2.digest.toString('hex')).hex()
+        var peer_bin = hexToBinary(peer_cid.multihash.toString('hex')) //hexToBinary(peer_sha) if we want to try the sha256(id) XOR method 
+        
+        if(!peers_found.hasOwnProperty(peer_cid.toString())){
+          peers_found[peer_cid.toString()] = "true";
+          peers_list.push([peer_bin,peer_cid.toString()])
+        }
+        count++;
       }
-
-      count++;
     }catch(error){console.log("Error DHT monitor")}
   }
 
@@ -93,7 +93,7 @@ async function monitorDHTtable(ipfs,db,my_cid){
           console.log(key, buckets[key].length);
     }
   }
-  DB.saveDHTcheck(db,buckets)
+  DB.saveDHTcheck(db,buckets,count,peers_list.length)
 }
 
 
