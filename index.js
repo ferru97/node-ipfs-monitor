@@ -42,7 +42,7 @@ function commonPrefixLength(peer_id, peers_list){
 }
 
 
-var lastCheck = null;
+var lastCheck = "00-00-0000 00:00:00";
 async function monitorSwarm(ipfs,db){
 
 var SQLtime = DB.sqlDate();
@@ -117,8 +117,8 @@ async function monitorDHTtable(ipfs,db,my_cid){
   DB.saveDHTcheck(db,buckets,count,peers_list.length,queried_peer,notEmpty_peer)
 }
 
-const ONE_MIN = 60000;
-async function main (IPFSdaemon,DBhost,DBport,DBuser,DBpsw,DBname) {
+async function main (IPFSdaemon,DBhost,DBport,DBuser,DBpsw,DBname,interval) {
+    interval = interval + 60000
     var db = DB.connectDB(DBhost,DBport,DBuser,DBpsw,DBname)
 
     const ipfs = ipfsClient(IPFSdaemon)
@@ -129,7 +129,7 @@ async function main (IPFSdaemon,DBhost,DBport,DBuser,DBpsw,DBname) {
         await Promise.all([monitorSwarm(ipfs,db), monitorDHTtable(ipfs,db,node_cid.id)]);
 
         console.log("-------------------------------------------")
-        await sleep.sleep(ONE_MIN);
+        await sleep.sleep(interval);
     };
     
   }
@@ -167,10 +167,15 @@ yargs.command({
       describe: 'SQL Database name',
       demandOption: true,
       type: 'string'
+    },
+    checkInterval: {
+      describe: 'Sleep interval between checks in minutes (Default 1)',
+      default: 1,
+      type: 'int'
     }
   },
   handler: function(argv){
-    main(argv.IPFSmultiadd,argv.DBhost,argv.DBport,argv.DBuser,argv.DBpsw,argv.DBname)
+    main(argv.IPFSmultiadd,argv.DBhost,argv.DBport,argv.DBuser,argv.DBpsw,argv.DBname,argv.checkInterval)
     console.log("Monitor started!")
   }
 })
