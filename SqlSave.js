@@ -22,10 +22,10 @@ function connectDB(Host,Port,User,Password,Database) {
     return connection
 }
 
-function saveDHTcheck(DBconn,buckets,total_peers,distinct_peer){
+function saveDHTcheck(DBconn,buckets,total_peers,distinct_peer,queried_peer,notEmpty_peer){
 
     var time = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    var sql = `INSERT INTO dhtt_check VALUES('DEFAULT','${time}','${parseInt(total_peers)}','${parseInt(distinct_peer)}')`
+    var sql = `INSERT INTO dhtt_check VALUES('DEFAULT','${time}','${parseInt(total_peers)}','${parseInt(distinct_peer)}','${parseInt(queried_peer)}','${parseInt(notEmpty_peer)}')`
     DBconn.query(sql ,(err, result, fields) => {
         if (err) throw err;
         var insert_id = result.insertId;
@@ -52,28 +52,27 @@ function saveDHTcheck(DBconn,buckets,total_peers,distinct_peer){
 }
 
 
-function saveSWARMcheck(DBconn,cid,multi_add,ip_fam,ip_add,port,location,peer_latency) {
 
-    var time = new Date().toISOString().slice(0, 19).replace('T', ' ');
+function saveSWARMcheck(DBconn,cid,multi_add,ip_fam,ip_add,port,location,peer_latency,direction,time,lastCheck) {
+
     DBconn.query(`SELECT cid FROM swarm_peer WHERE cid='${cid}'`, function (err, result, fields) {
         if (err) throw err;
         if(result.length <= 0){
             DBconn.query(`INSERT INTO swarm_peer VALUES ('${cid}')`, function (err, result, fields) {
                 if (err) throw err;
             });
-            var sql = `INSERT INTO swarm_connection VALUES ('DEFAULT','${cid}','${multi_add}','${time}','${time}','${ip_fam}','${ip_add}','${port}','${location}','${peer_latency}')`;
+            var sql = `INSERT INTO swarm_connection VALUES ('DEFAULT','${cid}','${multi_add}','${time}','${time}','${ip_fam}','${ip_add}','${port}','${location}','${peer_latency}','${direction}')`;
             DBconn.query(sql, function (err, result, fields) {if (err) throw err;});
         }else{
-            var sql = `SELECT id,end_time FROM swarm_connection WHERE peer='${cid}' ORDER BY end_time DESC LIMIT 1 `;
+            var sql = `SELECT id FROM swarm_connection WHERE peer='${cid}' AND end_time='${lastCheck}' LIMIT 1`;
             DBconn.query(sql, function (err, result, fields) {
                 if (err) throw err;
-                var time_diff_min = differenceMinutes(result[0].end_time,time);
-                if(result.length>0 && time_diff_min <= 10){
+                if(result.length>0){
                     var id = result[0].id
                     sql = `UPDATE swarm_connection SET end_time='${time}' WHERE id='${id}' `;
                     DBconn.query(sql, function (err, result, fields) {if (err) throw err;});
                 }else{
-                    var sql = `INSERT INTO swarm_connection VALUES ('DEFAULT','${cid}','${multi_add}','${time}','${time}','${ip_fam}','${ip_add}','${port}','${location}','${peer_latency}')`;
+                    var sql = `INSERT INTO swarm_connection VALUES ('DEFAULT','${cid}','${multi_add}','${time}','${time}','${ip_fam}','${ip_add}','${port}','${location}','${peer_latency}','${direction}')`;
                     DBconn.query(sql, function (err, result, fields) {if (err) throw err;});    
                 }
             });
@@ -82,17 +81,30 @@ function saveSWARMcheck(DBconn,cid,multi_add,ip_fam,ip_add,port,location,peer_la
 }
 
 
-function differenceMinutes(startDate, endDate ){
-    var timeStart = new Date(startDate).getTime();
-    var timeEnd = new Date(endDate).getTime();
-    var minDiff = (timeEnd - timeStart) / 60 / 1000;
-    return Math.abs(minDiff);
+function sqlDate(){
+    function twoDigits(str){
+        if(str.toString().length==1)
+            return "0"+str
+        else
+            return str
+    }
+
+    var currentdate = new Date(); 
+    var datetime = + twoDigits(currentdate.getFullYear()) + "-" 
+                   + twoDigits((currentdate.getMonth()+1))  + "-"  
+                   + twoDigits(currentdate.getDate()) + " "
+                   + twoDigits(currentdate.getHours()) + ":"  
+                   + twoDigits(currentdate.getMinutes()) + ":" 
+                   + twoDigits(currentdate.getSeconds());
+    return datetime
 }
+
 
 module.exports = {
     connectDB: connectDB,
     saveSWARMcheck: saveSWARMcheck,
-    saveDHTcheck: saveDHTcheck
+    saveDHTcheck: saveDHTcheck,
+    sqlDate: sqlDate,
 }
 
 
