@@ -18,6 +18,7 @@
     "ipfs-http-client": "^43.0.0",
     "js-ipfs": "0.0.301",
     "js-sha256": "^0.9.0",
+    "json2xls": "^0.1.2",
     "multiaddr": "^7.4.3",
     "mysql": "^2.18.1",
     "sleepjs": "^3.0.1",

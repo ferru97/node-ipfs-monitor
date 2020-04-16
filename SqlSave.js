@@ -1,3 +1,9 @@
+/*
+Description: Script used to create a connection to the SQL database and store the monitoring informations
+Author: Ferrulli Vito
+*/
+
+
 var mysql = require('mysql');
 
 function connectDB(Host,Port,User,Password,Database) {
@@ -21,6 +27,7 @@ function connectDB(Host,Port,User,Password,Database) {
     });
     return connection
 }
+
 
 function saveDHTcheck(DBconn,buckets,total_peers,distinct_peer,queried_peer,notEmpty_peer){
 
@@ -56,25 +63,27 @@ function saveDHTcheck(DBconn,buckets,total_peers,distinct_peer,queried_peer,notE
 function saveSWARMcheck(DBconn,cid,multi_add,ip_fam,ip_add,port,location,peer_latency,direction,time,lastCheck) {
 
     DBconn.query(`SELECT cid FROM swarm_peer WHERE cid='${cid}'`, function (err, result, fields) {
-        if (err) throw err;
+        if (err) Console.log("SQL error: SELECT cid swarm_peer");
         if(result.length <= 0){
             DBconn.query(`INSERT INTO swarm_peer VALUES ('${cid}')`, function (err, result, fields) {
-                if (err) throw err;
+                if (err) Console.log("SQL error: Insert swarm_peer");
             });
             var sql = `INSERT INTO swarm_connection VALUES ('DEFAULT','${cid}','${multi_add}','${time}','${time}','${ip_fam}','${ip_add}','${port}','${location}','${peer_latency}','${direction}')`;
-            DBconn.query(sql, function (err, result, fields) {if (err) throw err;});
+            DBconn.query(sql, function (err, result, fields) {if (err) Console.log("SQL error: Insert swarm_connection");});
         }else{
             var sql = `SELECT id FROM swarm_connection WHERE peer='${cid}' AND end_time='${lastCheck}' LIMIT 1`;
             DBconn.query(sql, function (err, result, fields) {
-                if (err) throw err;
-                if(result.length>0){
+                if (err) Console.log("SQL error: SELECT id FROM swarm_connection");
+                else{
+                   if(result.length>0){
                     var id = result[0].id
                     sql = `UPDATE swarm_connection SET end_time='${time}' WHERE id='${id}' `;
-                    DBconn.query(sql, function (err, result, fields) {if (err) throw err;});
-                }else{
-                    var sql = `INSERT INTO swarm_connection VALUES ('DEFAULT','${cid}','${multi_add}','${time}','${time}','${ip_fam}','${ip_add}','${port}','${location}','${peer_latency}','${direction}')`;
-                    DBconn.query(sql, function (err, result, fields) {if (err) throw err;});    
-                }
+                    DBconn.query(sql, function (err, result, fields) {if (err) Console.log("SQL error: UPDATE swarm_connection")});
+                    }else{
+                        var sql = `INSERT INTO swarm_connection VALUES ('DEFAULT','${cid}','${multi_add}','${time}','${time}','${ip_fam}','${ip_add}','${port}','${location}','${peer_latency}','${direction}')`;
+                        DBconn.query(sql, function (err, result, fields) {if (err) Console.log("SQL error: INSERT swarm_connection")});    
+                    } 
+                } 
             });
         }
     });
