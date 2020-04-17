@@ -1,5 +1,5 @@
 # IPFS Monitor
-A JavaScript base IPFS monitor tool used to monior the IPFS swarm and DHT
+A JavaScript based IPFS monitor tool used to monitor the IPFS swarm and DHT
 
 ### Requirements
 - **Node.js** JavaScript runtime
