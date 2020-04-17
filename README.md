@@ -7,7 +7,7 @@ A JavaScript base IPFS monitor tool used to monior the IPFS swarm and DHT
 - **SQL Database** to save the monitoring results
 
 ### How to use
-- Go in the root directory of the tool and download the dependencies with `npm init`
+- Go in the root directory of the tool and download the dependencies with `npm install`
 - Start the ipfs daemon with `ipfs daemon` command
 - Start the monitoring with the **monitor** command from the **index.js** script, giving the required arguments. Use `ipfs monitor --help` for more info
 
