@@ -19,7 +19,7 @@ function connectionsDistribution(){
         var c = -1;
         var last_timestamp = null;
 
-        const five_min = 900
+        const five_min = 900*4
 
         var i = 0;
         while(i<result.length){
@@ -107,7 +107,7 @@ function latencyDistribution(){
 }
 
 function connectionDuration(){
-    var sql = "SELECT (UNIX_TIMESTAMP(end_time)-UNIX_TIMESTAMP(start_time)) AS duration FROM swarm_connection ORDER BY duration ASC";
+    var sql = "SELECT (UNIX_TIMESTAMP(end_time)-UNIX_TIMESTAMP(start_time)) AS duration FROM swarm_connection ORDER BY duration ASC ";
     db.query(sql, function (err, result, fields) {
         if (err) throw err
 
@@ -116,14 +116,15 @@ function connectionDuration(){
         var c = -1
         var i = 0
 
-        var limit = 0;
+        var limit=sec_step;
         while(i<result.length){
-            if(c==-1 || parseInt(result[i].duration)>parseInt(res[c].duration.substring(0,res[c].duration.length))){
-                c++
-                res[c] = {duration:parseInt(result[i].duration)+sec_step+"sec", num:1}
-            }else{
+            if(c!=-1 && parseInt(result[i].duration)<limit){
                 res[c].num++
-                i++
+                i++ 
+            }else{
+                c++
+                res[c] = {duration:(limit-sec_step)+"-"+limit+"sec", num:1}
+                if(c!=-1) limit += sec_step
             }
         }
 
